@@ -71,7 +71,7 @@ The app includes a "Surprise Me" feature that randomly selects from a variety of
 1. Clone the repository:
 
    ```
-   git clone https://github.com/yourusername/ai-logo.git
+   git clone https://github.com/onurkaraas/ai-logo.git
    cd ai-logo
    ```
 
