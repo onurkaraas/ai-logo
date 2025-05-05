@@ -18,6 +18,7 @@ AI Logo Generator is a React Native application built with Expo that allows user
 - **Real-time Generation**: Watch as your logo is created in real-time with status updates
 - **Result Viewing**: See your generated logo with the original prompt and AI's response
 - **Error Handling**: Robust error handling with clear messages and retry options
+- **Optimized Performance**: Fast screen transitions and efficient data management
 
 ## How It Works
 
@@ -35,6 +36,7 @@ AI Logo Generator is a React Native application built with Expo that allows user
 - Uses Expo Router for navigation
 - Implements a clean, modern UI with custom components
 - Features responsive design with proper error handling
+- Utilizes React Context API for efficient state management and optimized navigation
 
 ### Backend (Firebase Cloud Functions)
 
@@ -65,6 +67,7 @@ The app includes a "Surprise Me" feature that randomly selects from a variety of
 - Expo CLI
 - Firebase account
 - Google Gemini API key
+- Basic understanding of React and React Native
 
 ### Installation
 
@@ -115,6 +118,24 @@ The app includes comprehensive error handling:
 - Generation failures
 
 Each error provides clear feedback and options to retry or modify your request.
+
+## Performance Optimizations
+
+The app includes several performance optimizations to ensure smooth user experience:
+
+- **Context-Based State Management**: Uses React Context API to manage logo data globally, eliminating the need to pass large base64 image data as URL parameters
+- **Optimized Navigation**: Implements efficient screen transitions by avoiding large data transfers between screens
+- **Responsive UI**: Ensures smooth interactions even during resource-intensive operations like image generation
+- **Error Recovery**: Provides graceful degradation and recovery options when issues occur
+
+### Technical Implementation
+
+The performance optimizations are implemented through:
+
+1. **React Context API**: A global state management solution that stores the generated logo data
+2. **Efficient Data Flow**: Passing only necessary data between components
+3. **Optimized Screen Transitions**: Avoiding URL parameter bloat by using context instead of route parameters
+4. **Component Architecture**: Structuring components to minimize unnecessary re-renders
 
 ## Acknowledgments
 
