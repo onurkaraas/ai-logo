@@ -19,8 +19,10 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
   const [loaded] = useFonts({
     Manrope_200ExtraLight,
     Manrope_300Light,
@@ -56,3 +58,5 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
+
+

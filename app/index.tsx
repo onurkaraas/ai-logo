@@ -1,4 +1,3 @@
-import { Link } from 'expo-router';
 import { useState } from 'react';
 import {
   Dimensions,
@@ -8,19 +7,46 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { LinearGradient } from '../node_modules/expo-linear-gradient/src/LinearGradient';
-
+import { LogoGenerationStatus } from '@/components/LogoGenerationStatus';
+import { httpsCallable } from 'firebase/functions';
+import { initializeApp } from "firebase/app";
+import { getFunctions } from 'firebase/functions';
 const { width } = Dimensions.get('window');
 const LOGO_STYLE_SIZE = (width - 80) / 4; // 4 items per row with some padding
 
+const firebaseConfig = {
+  apiKey: "AIzaSyDAVTqedlG_wgVgHP1akba4RXPDWmNpaoI",
+  authDomain: "ai-logo-95de8.firebaseapp.com",
+  projectId: "ai-logo-95de8",
+  storageBucket: "ai-logo-95de8.firebasestorage.app",
+  messagingSenderId: "629285714236",
+  appId: "1:629285714236:web:391ba19f83caaafa46c639",
+  measurementId: "G-YG5G5EFTKN"
+};
+
+// Initialize Firebase
+ const app = initializeApp(firebaseConfig);
+ const functions = getFunctions(app, 'us-central1');
+
 export default function OpeningScreen() {
+  // Input states
   const [prompt, setPrompt] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('no-style');
 
+  // Logo generation states
+  const [generationStatus, setGenerationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [logoImage, setLogoImage] = useState<{ uri: string } | null>(null);
+  const [textResponse, setTextResponse] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Define logo styles with proper icon names that match the MAPPING in IconSymbol
   const logoStyles = [
     { id: 'no-style', name: 'No Style', icon: 'block' },
     { id: 'monogram', name: 'Monogram', icon: 'text-format' },
@@ -29,19 +55,140 @@ export default function OpeningScreen() {
   ];
 
   const handleSurpriseMe = () => {
-    // This would be implemented to generate a random prompt
     setPrompt("A blue lion logo reading 'HEXA' in bold letters");
   };
 
+  // Function to generate the logo
+  const generateLogo = async () => {
+    if (!prompt.trim()) {
+      setErrorMessage('Please enter a prompt');
+      setGenerationStatus('error');
+      return;
+    }
+
+    try {
+      setGenerationStatus('loading');
+
+      // Call the Firebase Function
+      const generateLogoFunction = httpsCallable(functions, 'generateLogo');
+      const result = await generateLogoFunction({ prompt, style: selectedStyle });
+
+      // Extract the response data
+      const data = result.data as { success: boolean; imageData: string; textResponse: string };
+
+      if (data.success && data.imageData) {
+        // Set the image data
+        const imageUri = `data:image/png;base64,${data.imageData}`;
+        setLogoImage({ uri: imageUri });
+
+        // Set the text response if available
+        let responseText = '';
+        if (data.textResponse) {
+          responseText = data.textResponse;
+          setTextResponse(responseText);
+        }
+
+        // Show success status briefly
+        setGenerationStatus('success');
+
+        // Navigate to output screen after a short delay
+        setTimeout(() => {
+          // Navigate to output screen with the generated logo data
+          router.push({
+            pathname: '/output',
+            params: {
+              imageUri: imageUri,
+              prompt: prompt,
+              style: selectedStyle,
+              textResponse: responseText
+            }
+          });
+        }, 1000); // 1 second delay to show the success message
+      } else {
+        throw new Error('Failed to generate logo');
+      }
+    } catch (err) {
+      console.error('Error generating logo:', err);
+
+      // Extract more detailed error message if available
+      let errorMsg = 'Failed to generate logo. Please try again.';
+
+      if (err instanceof Error) {
+        const errorString = err.toString();
+
+        // Check for common Firebase error patterns
+        if (errorString.includes('Firebase') || errorString.includes('HttpsError')) {
+          // Extract the actual error message
+          if (errorString.includes('Gemini API key is missing')) {
+            errorMsg = 'API key configuration issue. Please contact support.';
+          } else if (errorString.includes('API quota exceeded')) {
+            errorMsg = 'API quota exceeded. Please try again later.';
+          } else if (errorString.includes('try a different prompt')) {
+            errorMsg = 'Please try a different prompt or style.';
+          } else if (errorString.includes(':')) {
+            // Extract message after colon if present
+            const parts = errorString.split(':');
+            if (parts.length > 1) {
+              const lastPart = parts[parts.length - 1].trim();
+              errorMsg = lastPart.charAt(0).toUpperCase() + lastPart.slice(1);
+            }
+          }
+        } else {
+          // Use the error message directly
+          errorMsg = err.message;
+        }
+      }
+
+      console.log('Formatted error message:', errorMsg);
+      setErrorMessage(errorMsg);
+      setGenerationStatus('error');
+    }
+  };
+
+  // Navigate to output screen when the success notification is tapped
+  const handleShowDetails = () => {
+    if (logoImage) {
+      router.push({
+        pathname: '/output',
+        params: {
+          imageUri: logoImage.uri,
+          prompt: prompt,
+          style: selectedStyle,
+          textResponse: textResponse
+        }
+      });
+    }
+  };
+
   return (
-    <ThemedView style={styles.container} darkColor="#1a1a2e">
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
+    <ThemedView style={{
+flex:1,
+}} darkColor="#1a1a2e">
+      <LinearGradient  
+      style={styles.container}
+      colors={['rgb(14,18,38)','#000', 'rgb(37,29,58)','#000']}
+          start={{ x: 1, y: .5 }}
+          end={{ x: .25, y: .8 }}>
+
+      {/* Logo Generation Status */}
+      <View style={styles.header}>
           <ThemedText type="title" style={styles.title}>
             AI Logo
           </ThemedText>
         </View>
 
+      {generationStatus !== 'idle' && (
+        <LogoGenerationStatus
+          status={generationStatus === 'loading' ? 'loading' : generationStatus === 'success' ? 'success' : 'error'}
+          logoImage={logoImage}
+          onPress={handleShowDetails}
+          errorMessage={errorMessage}
+          onRetry={() => generateLogo()}
+        />
+      )}
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+       
         <View style={styles.promptSection}>
           <View style={styles.promptHeader}>
             <ThemedText style={styles.sectionTitle}>
@@ -80,48 +227,45 @@ export default function OpeningScreen() {
 
           <View style={styles.styleOptions}>
             {logoStyles.map((style) => (
-              <TouchableOpacity
-                key={style.id}
-                style={[
-                  styles.styleOption,
-                  selectedStyle === style.id && styles.selectedStyleOption,
-                ]}
-                onPress={() => setSelectedStyle(style.id)}
-              >
-                <IconSymbol
-                  name={style.icon}
-                  size={32}
-                  color={selectedStyle === style.id ? '#fff' : '#666'}
-                />
+              <View key={style.id} style={styles.styleOptionContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.styleOption,
+                    selectedStyle === style.id && styles.selectedStyleOption,
+                  ]}
+                  onPress={() => setSelectedStyle(style.id)}
+                >
+                  {/* Use Material Icons directly instead of IconSymbol */}
+                  <MaterialIcons
+                    name={style.icon as any}
+                    size={32}
+                    color={selectedStyle === style.id ? '#fff' : '#666'}
+                  />
+                </TouchableOpacity>
                 <ThemedText
                   style={[
                     styles.styleOptionText,
-                    selectedStyle === style.id &&
-                      styles.selectedStyleOptionText,
+                    selectedStyle === style.id && styles.selectedStyleOptionText,
                   ]}
                 >
                   {style.name}
                 </ThemedText>
-              </TouchableOpacity>
+              </View>
             ))}
           </View>
         </View>
       </ScrollView>
 
-      <Link
-        href={{
-          pathname: '/output',
-          params: { prompt: prompt, style: selectedStyle },
-        }}
-        asChild
-      >
-        <TouchableOpacity >
+      {/* Create Button */}
+      <TouchableOpacity onPress={generateLogo} disabled={generationStatus === 'loading'}>
         <LinearGradient
-      
           colors={['#943DFF', '#2938DC']}
           start={{ x: 1, y: 0 }}
           end={{ x: 0, y: 1 }}
-          style={styles.createButton}
+          style={[
+            styles.createButton,
+            generationStatus === 'loading' && styles.disabledButton
+          ]}
         >
           <ThemedText style={styles.createButtonText}>Create</ThemedText>
           <IconSymbol
@@ -131,8 +275,9 @@ export default function OpeningScreen() {
             style={styles.createButtonIcon}
           />
         </LinearGradient>
-        </TouchableOpacity>
-      </Link>
+      </TouchableOpacity>
+      </LinearGradient>
+
     </ThemedView>
   );
 }
@@ -148,7 +293,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   header: {
-    marginBottom: 40,
+    marginVertical: 10,
   },
   title: {
     fontSize: 28,
@@ -225,14 +370,23 @@ const styles = StyleSheet.create({
   },
   selectedStyleOption: {
     backgroundColor: '#5d5fef',
+    borderColor: '#fafafa',
+    borderWidth: 2,
+  },
+  styleOptionContainer: {
+    alignItems: 'center',
+    marginBottom: 10,
+    width: LOGO_STYLE_SIZE + 10, // Add some extra width for the text
   },
   styleOptionText: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#666',
-    marginTop: 8,
+    textAlign: 'center',
     fontFamily: 'Manrope_400Regular',
+    marginTop: 5,
   },
   selectedStyleOptionText: {
+    fontFamily: 'Manrope_700Bold',
     color: '#fff',
   },
   createButton: {
@@ -246,6 +400,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
   createButtonText: {
     color: '#fff',
