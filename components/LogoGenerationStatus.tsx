@@ -45,10 +45,18 @@ export function LogoGenerationStatus({
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color="#ffffff" style={styles.loadingIndicator} />
+          <ActivityIndicator
+            size="small"
+            color="#ffffff"
+            style={styles.loadingIndicator}
+          />
           <View style={styles.loadingTextContainer}>
-            <ThemedText style={styles.loadingTitle}>Creating Your Design...</ThemedText>
-            <ThemedText style={styles.loadingSubtitle}>Ready in {timeLeft} minutes</ThemedText>
+            <ThemedText style={styles.loadingTitle}>
+              Creating Your Design...
+            </ThemedText>
+            <ThemedText style={styles.loadingSubtitle}>
+              Ready in {timeLeft} minutes
+            </ThemedText>
           </View>
         </View>
       </View>
@@ -61,11 +69,17 @@ export function LogoGenerationStatus({
         <TouchableOpacity onPress={onRetry} activeOpacity={0.8}>
           <View style={styles.errorContainer}>
             <View style={styles.errorIconContainer}>
-              <ThemedText style={styles.errorIcon}>!</ThemedText>
+              <View style={styles.errorIconContainer2}>
+                <ThemedText style={styles.errorIcon}>!</ThemedText>
+              </View>
             </View>
             <View style={styles.errorTextContainer}>
-              <ThemedText style={styles.errorTitle}>Oops, something went wrong!</ThemedText>
-              <ThemedText style={styles.errorSubtitle}>Click to try again.</ThemedText>
+              <ThemedText style={styles.errorTitle}>
+                Oops, something went wrong!
+              </ThemedText>
+              <ThemedText style={styles.errorSubtitle}>
+                Click to try again.
+              </ThemedText>
             </View>
           </View>
         </TouchableOpacity>
@@ -85,14 +99,18 @@ export function LogoGenerationStatus({
             />
           </View>
           <LinearGradient
-            colors={['#4F3DFF', '#2938DC']}
+            colors={['#2938DC', '#943DFF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.successTextWrapper}
           >
             <View style={styles.successTextContainer}>
-              <ThemedText style={styles.successTitle}>Your Design is Ready!</ThemedText>
-              <ThemedText style={styles.successSubtitle}>Tap to see it.</ThemedText>
+              <ThemedText style={styles.successTitle}>
+                Your Design is Ready!
+              </ThemedText>
+              <ThemedText style={styles.successSubtitle}>
+                Tap to see it.
+              </ThemedText>
             </View>
           </LinearGradient>
         </View>
@@ -148,16 +166,26 @@ const styles = StyleSheet.create({
   errorIconContainer: {
     width: 60,
     height: 60,
-    borderRadius: 12,
-    backgroundColor: '#EF4444',
+    borderBottomLeftRadius: 12,
+    borderTopLeftRadius: 12,
+    backgroundColor: 'rgb(228,130,127)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
+  errorIconContainer2: {
+    width: 30,
+    height: 30,
+    backgroundColor: '#ffffff',
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   errorIcon: {
     fontSize: 16,
+
     fontFamily: 'Manrope_700Bold',
-    color: '#fff',
+    color: 'rgb(228,130,127)',
   },
   errorTextContainer: {
     flex: 1,
