@@ -18,6 +18,7 @@ AI Logo Generator is a React Native application built with Expo that allows user
 - **Real-time Generation**: Watch as your logo is created in real-time with status updates
 - **Result Viewing**: See your generated logo with the original prompt and AI's response
 - **Save to Gallery**: Save your generated logos directly to your device's photo gallery
+- **Copy to Clipboard**: Easily copy prompts to clipboard for reuse or sharing
 - **Error Handling**: Robust error handling with clear messages and retry options
 - **Optimized Performance**: Fast screen transitions and efficient data management
 
@@ -139,23 +140,26 @@ The performance optimizations are implemented through:
 3. **Optimized Screen Transitions**: Avoiding URL parameter bloat by using context instead of route parameters
 4. **Component Architecture**: Structuring components to minimize unnecessary re-renders
 
-## Media Storage Features
+## Media Storage and Sharing Features
 
-The app provides robust media handling capabilities:
+The app provides robust media handling and sharing capabilities:
 
 - **Save to Gallery**: Save generated logos directly to your device's photo gallery
 - **Album Organization**: Automatically organizes saved logos in an "AI Logo" album
 - **Permission Handling**: Properly requests and manages media library permissions
 - **Efficient File Handling**: Converts base64 data to files for optimal storage
+- **Clipboard Integration**: Copy prompts to clipboard with visual feedback
+- **Share Functionality**: Share your creations with others
 
 ### Technical Implementation
 
-The media storage features are implemented using:
+The media storage and sharing features are implemented using:
 
 1. **Expo Media Library**: Provides access to the device's media library
 2. **Expo File System**: Handles temporary file creation and management
-3. **Permission Workflow**: Implements a user-friendly permission request flow
-4. **Error Handling**: Provides clear feedback when operations succeed or fail
+3. **Expo Clipboard**: Enables copying text to the system clipboard
+4. **Permission Workflow**: Implements a user-friendly permission request flow
+5. **Error Handling**: Provides clear feedback when operations succeed or fail
 
 ## Acknowledgments
 
@@ -164,3 +168,4 @@ The media storage features are implemented using:
 - Expo for the development framework
 - Expo Media Library for device storage integration
 - Expo File System for file management
+- Expo Clipboard for clipboard functionality
