@@ -16,24 +16,24 @@ import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { LogoGenerationStatus } from '@/components/LogoGenerationStatus';
 import { httpsCallable } from 'firebase/functions';
-import { initializeApp } from "firebase/app";
+import { initializeApp } from 'firebase/app';
 import { getFunctions } from 'firebase/functions';
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyDAVTqedlG_wgVgHP1akba4RXPDWmNpaoI',
+  authDomain: 'ai-logo-95de8.firebaseapp.com',
+  projectId: 'ai-logo-95de8',
+  storageBucket: 'ai-logo-95de8.firebasestorage.app',
+  messagingSenderId: '629285714236',
+  appId: '1:629285714236:web:391ba19f83caaafa46c639',
+  measurementId: 'G-YG5G5EFTKN',
+};
+
 const { width } = Dimensions.get('window');
 const LOGO_STYLE_SIZE = (width - 80) / 4; // 4 items per row with some padding
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDAVTqedlG_wgVgHP1akba4RXPDWmNpaoI",
-  authDomain: "ai-logo-95de8.firebaseapp.com",
-  projectId: "ai-logo-95de8",
-  storageBucket: "ai-logo-95de8.firebasestorage.app",
-  messagingSenderId: "629285714236",
-  appId: "1:629285714236:web:391ba19f83caaafa46c639",
-  measurementId: "G-YG5G5EFTKN"
-};
-
-// Initialize Firebase
- const app = initializeApp(firebaseConfig);
- const functions = getFunctions(app, 'us-central1');
+const app = initializeApp(firebaseConfig);
+const functions = getFunctions(app);
 
 export default function OpeningScreen() {
   // Input states
@@ -41,7 +41,9 @@ export default function OpeningScreen() {
   const [selectedStyle, setSelectedStyle] = useState('no-style');
 
   // Logo generation states
-  const [generationStatus, setGenerationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [generationStatus, setGenerationStatus] = useState<
+    'idle' | 'loading' | 'success' | 'error'
+  >('idle');
   const [logoImage, setLogoImage] = useState<{ uri: string } | null>(null);
   const [textResponse, setTextResponse] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -54,8 +56,24 @@ export default function OpeningScreen() {
     { id: 'mascot', name: 'Mascot', icon: 'pets' },
   ];
 
+  // Array of diverse logo prompt ideas
+  const logoPromptIdeas = [
+    "A blue lion logo reading 'HEXA' in bold letters",
+    "A minimalist mountain peak logo for 'SUMMIT' adventure company",
+    "A tech-inspired logo with circuit patterns for 'NEXUS' software",
+    "An elegant tree logo for 'ROOTS' organic food brand",
+    "A vibrant phoenix logo for 'IGNITE' fitness studio",
+    "A sleek rocket ship logo for 'LAUNCH' startup incubator",
+    "A geometric owl logo for 'WISDOM' educational platform",
+    "A wave-inspired logo for 'AQUA' water purification company",
+    "A coffee bean logo for 'BREW' specialty coffee shop",
+    "A DNA helix logo for 'GENOME' biotech research firm",
+  ];
+
+  // Function to randomly select a prompt from the array
   const handleSurpriseMe = () => {
-    setPrompt("A blue lion logo reading 'HEXA' in bold letters");
+    const randomIndex = Math.floor(Math.random() * logoPromptIdeas.length);
+    setPrompt(logoPromptIdeas[randomIndex]);
   };
 
   // Function to generate the logo
@@ -71,10 +89,17 @@ export default function OpeningScreen() {
 
       // Call the Firebase Function
       const generateLogoFunction = httpsCallable(functions, 'generateLogo');
-      const result = await generateLogoFunction({ prompt, style: selectedStyle });
+      const result = await generateLogoFunction({
+        prompt,
+        style: selectedStyle,
+      });
 
       // Extract the response data
-      const data = result.data as { success: boolean; imageData: string; textResponse: string };
+      const data = result.data as {
+        success: boolean;
+        imageData: string;
+        textResponse: string;
+      };
 
       if (data.success && data.imageData) {
         // Set the image data
@@ -90,20 +115,6 @@ export default function OpeningScreen() {
 
         // Show success status briefly
         setGenerationStatus('success');
-
-        // Navigate to output screen after a short delay
-        setTimeout(() => {
-          // Navigate to output screen with the generated logo data
-          router.push({
-            pathname: '/output',
-            params: {
-              imageUri: imageUri,
-              prompt: prompt,
-              style: selectedStyle,
-              textResponse: responseText
-            }
-          });
-        }, 1000); // 1 second delay to show the success message
       } else {
         throw new Error('Failed to generate logo');
       }
@@ -114,29 +125,7 @@ export default function OpeningScreen() {
       let errorMsg = 'Failed to generate logo. Please try again.';
 
       if (err instanceof Error) {
-        const errorString = err.toString();
-
-        // Check for common Firebase error patterns
-        if (errorString.includes('Firebase') || errorString.includes('HttpsError')) {
-          // Extract the actual error message
-          if (errorString.includes('Gemini API key is missing')) {
-            errorMsg = 'API key configuration issue. Please contact support.';
-          } else if (errorString.includes('API quota exceeded')) {
-            errorMsg = 'API quota exceeded. Please try again later.';
-          } else if (errorString.includes('try a different prompt')) {
-            errorMsg = 'Please try a different prompt or style.';
-          } else if (errorString.includes(':')) {
-            // Extract message after colon if present
-            const parts = errorString.split(':');
-            if (parts.length > 1) {
-              const lastPart = parts[parts.length - 1].trim();
-              errorMsg = lastPart.charAt(0).toUpperCase() + lastPart.slice(1);
-            }
-          }
-        } else {
-          // Use the error message directly
-          errorMsg = err.message;
-        }
+        errorMsg = err.message;
       }
 
       console.log('Formatted error message:', errorMsg);
@@ -154,130 +143,141 @@ export default function OpeningScreen() {
           imageUri: logoImage.uri,
           prompt: prompt,
           style: selectedStyle,
-          textResponse: textResponse
-        }
+          textResponse: textResponse,
+        },
       });
     }
   };
 
   return (
-    <ThemedView style={{
-flex:1,
-}} darkColor="#1a1a2e">
-      <LinearGradient  
-      style={styles.container}
-      colors={['rgb(14,18,38)','#000', 'rgb(37,29,58)','#000']}
-          start={{ x: 1, y: .5 }}
-          end={{ x: .25, y: .8 }}>
-
-      {/* Logo Generation Status */}
-      <View style={styles.header}>
+    <ThemedView
+      style={{
+        flex: 1,
+      }}
+      darkColor="#1a1a2e"
+    >
+      <LinearGradient
+        style={styles.container}
+        colors={['rgb(14,18,38)', '#000', 'rgb(37,29,58)', '#000']}
+        start={{ x: 1, y: 0.5 }}
+        end={{ x: 0.25, y: 0.8 }}
+      >
+        {/* Logo Generation Status */}
+        <View style={styles.header}>
           <ThemedText type="title" style={styles.title}>
             AI Logo
           </ThemedText>
         </View>
 
-      {generationStatus !== 'idle' && (
-        <LogoGenerationStatus
-          status={generationStatus === 'loading' ? 'loading' : generationStatus === 'success' ? 'success' : 'error'}
-          logoImage={logoImage}
-          onPress={handleShowDetails}
-          errorMessage={errorMessage}
-          onRetry={() => generateLogo()}
-        />
-      )}
+        {generationStatus !== 'idle' && (
+          <LogoGenerationStatus
+            status={
+              generationStatus === 'loading'
+                ? 'loading'
+                : generationStatus === 'success'
+                  ? 'success'
+                  : 'error'
+            }
+            logoImage={logoImage}
+            onPress={handleShowDetails}
+            errorMessage={errorMessage}
+            onRetry={() => generateLogo()}
+          />
+        )}
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-       
-        <View style={styles.promptSection}>
-          <View style={styles.promptHeader}>
-            <ThemedText style={styles.sectionTitle}>
-              Enter Your Prompt
-            </ThemedText>
-            <TouchableOpacity
-              style={styles.surpriseButton}
-              onPress={handleSurpriseMe}
-            >
-              <ThemedText style={styles.surpriseButtonText}>
-                🎲 Surprise me
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.promptSection}>
+            <View style={styles.promptHeader}>
+              <ThemedText style={styles.sectionTitle}>
+                Enter Your Prompt
               </ThemedText>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="A blue lion logo reading 'HEXA' in bold letters"
-              placeholderTextColor="#666"
-              value={prompt}
-              onChangeText={setPrompt}
-              multiline
-              numberOfLines={4}
-              maxLength={500}
-            />
-            <View style={styles.counterContainer}>
-              <ThemedText style={styles.counter}>
-                {prompt.length}/500
-              </ThemedText>
+              <TouchableOpacity
+                style={styles.surpriseButton}
+                onPress={handleSurpriseMe}
+              >
+                <ThemedText style={styles.surpriseButtonText}>
+                  🎲 Surprise me
+                </ThemedText>
+              </TouchableOpacity>
             </View>
-          </View>
-        </View>
-
-        <View style={styles.stylesSection}>
-          <ThemedText style={styles.logoTitle}>Logo Styles</ThemedText>
-
-          <View style={styles.styleOptions}>
-            {logoStyles.map((style) => (
-              <View key={style.id} style={styles.styleOptionContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.styleOption,
-                    selectedStyle === style.id && styles.selectedStyleOption,
-                  ]}
-                  onPress={() => setSelectedStyle(style.id)}
-                >
-                  {/* Use Material Icons directly instead of IconSymbol */}
-                  <MaterialIcons
-                    name={style.icon as any}
-                    size={32}
-                    color={selectedStyle === style.id ? '#fff' : '#666'}
-                  />
-                </TouchableOpacity>
-                <ThemedText
-                  style={[
-                    styles.styleOptionText,
-                    selectedStyle === style.id && styles.selectedStyleOptionText,
-                  ]}
-                >
-                  {style.name}
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="A blue lion logo reading 'HEXA' in bold letters"
+                placeholderTextColor="#666"
+                value={prompt}
+                onChangeText={setPrompt}
+                multiline
+                numberOfLines={4}
+                maxLength={500}
+              />
+              <View style={styles.counterContainer}>
+                <ThemedText style={styles.counter}>
+                  {prompt.length}/500
                 </ThemedText>
               </View>
-            ))}
+            </View>
           </View>
-        </View>
-      </ScrollView>
 
-      {/* Create Button */}
-      <TouchableOpacity onPress={generateLogo} disabled={generationStatus === 'loading'}>
-        <LinearGradient
-          colors={['#943DFF', '#2938DC']}
-          start={{ x: 1, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={[
-            styles.createButton,
-            generationStatus === 'loading' && styles.disabledButton
-          ]}
+          <View style={styles.stylesSection}>
+            <ThemedText style={styles.logoTitle}>Logo Styles</ThemedText>
+
+            <View style={styles.styleOptions}>
+              {logoStyles.map((style) => (
+                <View key={style.id} style={styles.styleOptionContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.styleOption,
+                      selectedStyle === style.id && styles.selectedStyleOption,
+                    ]}
+                    onPress={() => setSelectedStyle(style.id)}
+                  >
+                    {/* Use Material Icons directly instead of IconSymbol */}
+                    <MaterialIcons
+                      name={style.icon as any}
+                      size={32}
+                      color={selectedStyle === style.id ? '#fff' : '#666'}
+                    />
+                  </TouchableOpacity>
+                  <ThemedText
+                    style={[
+                      styles.styleOptionText,
+                      selectedStyle === style.id &&
+                        styles.selectedStyleOptionText,
+                    ]}
+                  >
+                    {style.name}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+
+        {/* Create Button */}
+        <TouchableOpacity
+          onPress={generateLogo}
+          disabled={generationStatus === 'loading'}
         >
-          <ThemedText style={styles.createButtonText}>Create</ThemedText>
-          <IconSymbol
-            name="sparkles"
-            size={16}
-            color="#fff"
-            style={styles.createButtonIcon}
-          />
-        </LinearGradient>
-      </TouchableOpacity>
+          <LinearGradient
+            colors={['#943DFF', '#2938DC']}
+            start={{ x: 1, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={[
+              styles.createButton,
+              generationStatus === 'loading' && styles.disabledButton,
+            ]}
+          >
+            <ThemedText style={styles.createButtonText}>Create</ThemedText>
+            <IconSymbol
+              name="sparkles"
+              size={16}
+              color="#fff"
+              style={styles.createButtonIcon}
+            />
+          </LinearGradient>
+        </TouchableOpacity>
       </LinearGradient>
-
     </ThemedView>
   );
 }
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   title: {
-    fontSize: 28,
+    fontSize: 18,
     textAlign: 'center',
     color: '#ffffff',
   },
