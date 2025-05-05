@@ -7,22 +7,27 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  ScrollView,
+  Share,
 } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export default function OutputScreen() {
   const params = useLocalSearchParams();
-  const { prompt, style } = params;
 
-  // This would be replaced with the actual logo from the API
-  // For now, we're using a placeholder image
-  const [logoImage, setLogoImage] = useState({
-    uri: 'https://i.imgur.com/Tn5JnZR.png',
-  });
+  // Extract parameters from the route
+  const prompt = params.prompt as string;
+  const style = params.style as string;
+  const imageUri = params.imageUri as string;
+  const textResponseParam = params.textResponse as string;
+
+  // State for sharing
+  const [isSharing, setIsSharing] = useState(false);
 
   const handleClose = () => {
     router.back();
@@ -30,55 +35,79 @@ export default function OutputScreen() {
 
   const handleCopy = () => {
     // This would implement the copy functionality
-    // For now, we'll just show a console log
     console.log('Copying prompt:', prompt);
     // In a real app, you would use Clipboard.setStringAsync(prompt)
   };
 
+  const handleShare = async () => {
+    try {
+      setIsSharing(true);
+
+      await Share.share({
+        message: `Check out this logo I created with AI Logo!\n\nPrompt: ${prompt}\nStyle: ${style}`,
+        // You can't share the image directly from a data URI, but in a real app
+        // you would save it to a file first and then share the file
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   return (
     <ThemedView style={styles.container} darkColor="#1a1a2e">
-      <StatusBar barStyle="light-content" />
+      <LinearGradient
+        style={styles.container}
+        colors={['rgb(14,18,38)', '#000', 'rgb(37,29,58)', '#000']}
+        start={{ x: 1, y: 0.5 }}
+        end={{ x: 0.25, y: 0.8 }}
+      >
+        <StatusBar barStyle="light-content" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <ThemedText style={styles.headerTitle}>Your Design</ThemedText>
-        <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-          <ThemedText style={styles.closeButtonText}>✕</ThemedText>
-        </TouchableOpacity>
-      </View>
-
-      {/* Logo Display */}
-      <View style={styles.logoContainer}>
-        <Image
-          source={logoImage}
-          style={styles.logoImage}
-          contentFit="contain"
-        />
-      </View>
-
-      {/* Prompt Section */}
-      <View style={styles.promptSection}>
-        <ThemedText style={styles.promptTitle}>Prompt</ThemedText>
-        <View style={styles.promptContainer}>
-          <ThemedText style={styles.promptText}>
-            {prompt ||
-              'A professional logo for Harrison & Co. Law Firm, using balanced serif fonts'}
-          </ThemedText>
-          <TouchableOpacity onPress={handleCopy} style={styles.copyButton}>
-            <ThemedText style={styles.copyButtonText}>📋 Copy</ThemedText>
+        {/* Header */}
+        <View style={styles.header}>
+          <ThemedText style={styles.headerTitle}>Your Design</ThemedText>
+          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+            <ThemedText style={styles.closeButtonText}>✕</ThemedText>
           </TouchableOpacity>
         </View>
-        <View style={styles.tagContainer}>
-          <View style={styles.tag}>
-            <ThemedText style={styles.tagText}>
-              {style || 'Monogram'}
-            </ThemedText>
-          </View>
-        </View>
-      </View>
 
-      {/* Bottom Indicator */}
-      <View style={styles.bottomIndicator} />
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Logo Display */}
+          <View style={styles.logoContainer}>
+            {imageUri ? (
+              <Image
+                source={{ uri: imageUri }}
+                style={styles.logoImage}
+                contentFit="contain"
+              />
+            ) : (
+              <View style={styles.errorContainer}>
+                <ThemedText style={styles.errorText}>
+                  No image data available
+                </ThemedText>
+              </View>
+            )}
+          </View>
+
+          {/* Prompt Section */}
+          <View style={styles.promptSection}>
+            <ThemedText style={styles.promptTitle}>Prompt</ThemedText>
+            <View style={styles.promptContainer}>
+              <ThemedText style={styles.promptText}>{prompt}</ThemedText>
+              <TouchableOpacity onPress={handleCopy} style={styles.copyButton}>
+                <ThemedText style={styles.copyButtonText}>Copy</ThemedText>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.tagContainer}>
+              <View style={styles.tag}>
+                <ThemedText style={styles.tagText}>{style}</ThemedText>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </LinearGradient>
     </ThemedView>
   );
 }
@@ -86,7 +115,11 @@ export default function OutputScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 20,
     backgroundColor: '#1a1a2e',
+  },
+  scrollContent: {
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
@@ -136,9 +169,26 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#2a2a3e',
+    width: '100%',
+    height: '100%',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    fontFamily: 'Manrope_500Medium',
+    color: '#ffffff',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
   promptSection: {
     marginTop: 20,
     paddingHorizontal: 20,
+    marginBottom: 50, // Add more bottom margin for scrolling
   },
   promptTitle: {
     fontSize: 16,
@@ -188,6 +238,41 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12,
     fontFamily: 'Manrope_500Medium',
+  },
+  aiResponseContainer: {
+    marginTop: 20,
+  },
+  aiResponseTitle: {
+    fontSize: 16,
+    fontFamily: 'Manrope_600SemiBold',
+    color: '#ffffff',
+    marginBottom: 10,
+  },
+  aiResponseTextContainer: {
+    backgroundColor: '#2a2a3e',
+    borderRadius: 12,
+    padding: 16,
+  },
+  aiResponseText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontFamily: 'Manrope_400Regular',
+  },
+  shareButton: {
+    position: 'absolute',
+    bottom: 40,
+    left: 20,
+    right: 20,
+    backgroundColor: '#5d5fef',
+    borderRadius: 30,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shareButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontFamily: 'Manrope_600SemiBold',
   },
   bottomIndicator: {
     width: 40,
