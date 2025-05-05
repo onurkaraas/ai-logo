@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   Dimensions,
@@ -14,17 +14,13 @@ import {
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useImageContext } from '@/context/ImageContext';
 
 const { width } = Dimensions.get('window');
 
 export default function OutputScreen() {
-  const params = useLocalSearchParams();
-
-  // Extract parameters from the route
-  const prompt = params.prompt as string;
-  const style = params.style as string;
-  const imageUri = params.imageUri as string;
-  const textResponseParam = params.textResponse as string;
+  // Get logo data from context instead of URL parameters
+  const { logoImage, prompt, style, textResponse } = useImageContext();
 
   // State for sharing
   const [isSharing, setIsSharing] = useState(false);
@@ -55,6 +51,21 @@ export default function OutputScreen() {
     }
   };
 
+  // Add a share button to the UI
+  const renderShareButton = () => {
+    return (
+      <TouchableOpacity
+        style={styles.shareButton}
+        onPress={handleShare}
+        disabled={isSharing}
+      >
+        <ThemedText style={styles.shareButtonText}>
+          {isSharing ? 'Sharing...' : 'Share'}
+        </ThemedText>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <ThemedView style={styles.container} darkColor="#1a1a2e">
       <LinearGradient
@@ -76,9 +87,9 @@ export default function OutputScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Logo Display */}
           <View style={styles.logoContainer}>
-            {imageUri ? (
+            {logoImage && logoImage.uri ? (
               <Image
-                source={{ uri: imageUri }}
+                source={logoImage}
                 style={styles.logoImage}
                 contentFit="contain"
               />

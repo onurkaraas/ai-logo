@@ -18,6 +18,7 @@ import { LogoGenerationStatus } from '@/components/LogoGenerationStatus';
 import { httpsCallable } from 'firebase/functions';
 import { initializeApp } from 'firebase/app';
 import { getFunctions } from 'firebase/functions';
+import { useImageContext } from '@/context/ImageContext';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDAVTqedlG_wgVgHP1akba4RXPDWmNpaoI',
@@ -36,6 +37,9 @@ const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app);
 
 export default function OpeningScreen() {
+  // Get the image context
+  const { setLogoData } = useImageContext();
+
   // Input states
   const [prompt, setPrompt] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('no-style');
@@ -137,15 +141,16 @@ export default function OpeningScreen() {
   // Navigate to output screen when the success notification is tapped
   const handleShowDetails = () => {
     if (logoImage) {
-      router.push({
-        pathname: '/output',
-        params: {
-          imageUri: logoImage.uri,
-          prompt: prompt,
-          style: selectedStyle,
-          textResponse: textResponse,
-        },
+      // Store the logo data in context instead of passing as URL parameters
+      setLogoData({
+        logoImage,
+        prompt,
+        style: selectedStyle,
+        textResponse,
       });
+
+      // Navigate to the output screen without passing large data in URL
+      router.push('/output');
     }
   };
 
