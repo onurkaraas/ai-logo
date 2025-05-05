@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
+import * as Clipboard from 'expo-clipboard';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -42,10 +43,19 @@ export default function OutputScreen() {
     router.back();
   };
 
-  const handleCopy = () => {
-    // This would implement the copy functionality
-    console.log('Copying prompt:', prompt);
-    // In a real app, you would use Clipboard.setStringAsync(prompt)
+  const [isCopying, setIsCopying] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      setIsCopying(true);
+      await Clipboard.setStringAsync(prompt);
+      Alert.alert('Success', 'Prompt copied to clipboard');
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      Alert.alert('Error', 'Failed to copy to clipboard');
+    } finally {
+      setIsCopying(false);
+    }
   };
 
   // Function to save the image to the device
@@ -164,8 +174,14 @@ export default function OutputScreen() {
             <ThemedText style={styles.promptTitle}>Prompt</ThemedText>
             <View style={styles.promptContainer}>
               <ThemedText style={styles.promptText}>{prompt}</ThemedText>
-              <TouchableOpacity onPress={handleCopy} style={styles.copyButton}>
-                <ThemedText style={styles.copyButtonText}>Copy</ThemedText>
+              <TouchableOpacity
+                onPress={handleCopy}
+                style={styles.copyButton}
+                disabled={isCopying}
+              >
+                <ThemedText style={styles.copyButtonText}>
+                  {isCopying ? 'Copying...' : 'Copy'}
+                </ThemedText>
               </TouchableOpacity>
             </View>
             <View style={styles.tagContainer}>
