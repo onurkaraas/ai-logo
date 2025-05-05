@@ -12,6 +12,7 @@ import {
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { LinearGradient } from '../node_modules/expo-linear-gradient/src/LinearGradient';
 
 const { width } = Dimensions.get('window');
 const LOGO_STYLE_SIZE = (width - 80) / 4; // 4 items per row with some padding
@@ -114,7 +115,14 @@ export default function OpeningScreen() {
         }}
         asChild
       >
-        <TouchableOpacity style={styles.createButton}>
+        <TouchableOpacity >
+        <LinearGradient
+      
+          colors={['#943DFF', '#2938DC']}
+          start={{ x: 1, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.createButton}
+        >
           <ThemedText style={styles.createButtonText}>Create</ThemedText>
           <IconSymbol
             name="sparkles"
@@ -122,6 +130,7 @@ export default function OpeningScreen() {
             color="#fff"
             style={styles.createButtonIcon}
           />
+        </LinearGradient>
         </TouchableOpacity>
       </Link>
     </ThemedView>
