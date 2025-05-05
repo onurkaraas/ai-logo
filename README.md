@@ -17,6 +17,7 @@ AI Logo Generator is a React Native application built with Expo that allows user
 - **"Surprise Me" Function**: Get random creative prompt ideas when you're not sure what to create
 - **Real-time Generation**: Watch as your logo is created in real-time with status updates
 - **Result Viewing**: See your generated logo with the original prompt and AI's response
+- **Save to Gallery**: Save your generated logos directly to your device's photo gallery
 - **Error Handling**: Robust error handling with clear messages and retry options
 - **Optimized Performance**: Fast screen transitions and efficient data management
 
@@ -26,7 +27,7 @@ AI Logo Generator is a React Native application built with Expo that allows user
 2. **Select a Style**: Choose from different logo styles to guide the AI
 3. **Generate**: Click the "Create" button to send your request to the AI
 4. **View Results**: Once generated, view your logo and the AI's explanation
-5. **Share or Save**: View the full details and save your creation
+5. **Share or Save**: View the full details, save your creation to your device's gallery in the "AI Logo" album, or share it
 
 ## Technical Architecture
 
@@ -68,6 +69,7 @@ The app includes a "Surprise Me" feature that randomly selects from a variety of
 - Firebase account
 - Google Gemini API key
 - Basic understanding of React and React Native
+- Device with camera roll access for saving images
 
 ### Installation
 
@@ -137,8 +139,28 @@ The performance optimizations are implemented through:
 3. **Optimized Screen Transitions**: Avoiding URL parameter bloat by using context instead of route parameters
 4. **Component Architecture**: Structuring components to minimize unnecessary re-renders
 
+## Media Storage Features
+
+The app provides robust media handling capabilities:
+
+- **Save to Gallery**: Save generated logos directly to your device's photo gallery
+- **Album Organization**: Automatically organizes saved logos in an "AI Logo" album
+- **Permission Handling**: Properly requests and manages media library permissions
+- **Efficient File Handling**: Converts base64 data to files for optimal storage
+
+### Technical Implementation
+
+The media storage features are implemented using:
+
+1. **Expo Media Library**: Provides access to the device's media library
+2. **Expo File System**: Handles temporary file creation and management
+3. **Permission Workflow**: Implements a user-friendly permission request flow
+4. **Error Handling**: Provides clear feedback when operations succeed or fail
+
 ## Acknowledgments
 
 - Google Gemini API for the AI image generation capabilities
 - Firebase for backend services
 - Expo for the development framework
+- Expo Media Library for device storage integration
+- Expo File System for file management
