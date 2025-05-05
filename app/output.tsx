@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dimensions,
   StatusBar,
@@ -9,7 +9,11 @@ import {
   View,
   ScrollView,
   Share,
+  Alert,
+  Platform,
 } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -22,8 +26,17 @@ export default function OutputScreen() {
   // Get logo data from context instead of URL parameters
   const { logoImage, prompt, style, textResponse } = useImageContext();
 
-  // State for sharing
-  const [isSharing, setIsSharing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [permissionStatus, setPermissionStatus] =
+    useState<MediaLibrary.PermissionStatus | null>(null);
+
+  // Request media library permissions when component mounts
+  useEffect(() => {
+    (async () => {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      setPermissionStatus(status);
+    })();
+  }, []);
 
   const handleClose = () => {
     router.back();
@@ -35,35 +48,79 @@ export default function OutputScreen() {
     // In a real app, you would use Clipboard.setStringAsync(prompt)
   };
 
-  const handleShare = async () => {
-    try {
-      setIsSharing(true);
-
-      await Share.share({
-        message: `Check out this logo I created with AI Logo!\n\nPrompt: ${prompt}\nStyle: ${style}`,
-        // You can't share the image directly from a data URI, but in a real app
-        // you would save it to a file first and then share the file
-      });
-    } catch (error) {
-      console.error('Error sharing:', error);
-    } finally {
-      setIsSharing(false);
+  // Function to save the image to the device
+  const handleSaveImage = async () => {
+    if (!logoImage || !logoImage.uri) {
+      Alert.alert('Error', 'No image to save');
+      return;
     }
-  };
 
-  // Add a share button to the UI
-  const renderShareButton = () => {
-    return (
-      <TouchableOpacity
-        style={styles.shareButton}
-        onPress={handleShare}
-        disabled={isSharing}
-      >
-        <ThemedText style={styles.shareButtonText}>
-          {isSharing ? 'Sharing...' : 'Share'}
-        </ThemedText>
-      </TouchableOpacity>
-    );
+    try {
+      setIsSaving(true);
+
+      // Check if we have permission to save to media library
+      if (permissionStatus !== 'granted') {
+        const { status } = await MediaLibrary.requestPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert(
+            'Permission Required',
+            'We need permission to save images to your device'
+          );
+          setIsSaving(false);
+          return;
+        }
+      }
+
+      // For data URI, we need to first save it to a temporary file
+      if (logoImage.uri.startsWith('data:')) {
+        // Extract base64 data from the URI
+        const base64Data = logoImage.uri.split(',')[1];
+
+        // Create a temporary file path
+        const fileUri =
+          FileSystem.documentDirectory +
+          'ai-logo-' +
+          new Date().getTime() +
+          '.png';
+
+        // Write the base64 data to the file
+        await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        // Save the file to the media library
+        const asset = await MediaLibrary.createAssetAsync(fileUri);
+
+        // Create an album if it doesn't exist and add the asset to it
+        const album = await MediaLibrary.getAlbumAsync('AI Logo');
+        if (album === null) {
+          await MediaLibrary.createAlbumAsync('AI Logo', asset, false);
+        } else {
+          await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+        }
+
+        // Delete the temporary file
+        await FileSystem.deleteAsync(fileUri);
+
+        Alert.alert('Success', 'Logo saved to your gallery');
+      } else {
+        // If it's already a file URI, just save it directly
+        const asset = await MediaLibrary.createAssetAsync(logoImage.uri);
+        const album = await MediaLibrary.getAlbumAsync('AI Logo');
+        if (album === null) {
+          await MediaLibrary.createAlbumAsync('AI Logo', asset, false);
+        } else {
+          await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+        }
+
+        Alert.alert('Success', 'Logo saved to your gallery');
+      }
+    } catch (error) {
+      console.error('Error saving image:', error);
+      Alert.alert('Error', 'Failed to save the image');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -116,6 +173,20 @@ export default function OutputScreen() {
                 <ThemedText style={styles.tagText}>{style}</ThemedText>
               </View>
             </View>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.actionButtonsContainer}>
+            {/* Save Button */}
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleSaveImage}
+              disabled={isSaving}
+            >
+              <ThemedText style={styles.actionButtonText}>
+                {isSaving ? 'Saving...' : 'Save to Gallery'}
+              </ThemedText>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </LinearGradient>
@@ -269,22 +340,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Manrope_400Regular',
   },
-  shareButton: {
-    position: 'absolute',
-    bottom: 40,
-    left: 20,
-    right: 20,
-    backgroundColor: '#5d5fef',
-    borderRadius: 30,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  shareButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontFamily: 'Manrope_600SemiBold',
-  },
   bottomIndicator: {
     width: 40,
     height: 5,
@@ -294,5 +349,25 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 30,
     opacity: 0.5,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 40,
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: '#5d5fef',
+    borderRadius: 30,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Manrope_600SemiBold',
   },
 });
