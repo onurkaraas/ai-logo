@@ -19,7 +19,6 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
@@ -47,8 +46,6 @@ export default function RootLayout() {
           name="output"
           options={{
             headerShown: false,
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
           }}
         />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -58,5 +55,3 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
-
-
